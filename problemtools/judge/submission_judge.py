@@ -1,16 +1,16 @@
 from __future__ import annotations
 
 import copy
-import sys
 from concurrent.futures import Future
 from pathlib import Path
 from threading import Lock
+from typing import Protocol
 
 from ..context import Context
 from ..diagnostics import Diagnostics
 from ..metadata import Metadata
-from ..model import DEFAULT_GRADER, Graders, TestCase, TestDataGroup
-from ..run import Program
+from ..model import DEFAULT_GRADER, Graders, Submission, TestCase, TestDataGroup
+from ..run import CompileResult, Program
 from .cache import ResultCache, ResultStore
 from .execute import execute_testcase
 from .grade import grade_group
@@ -197,16 +197,13 @@ class SubmissionJudge:
                 # When a live results table is up it owns the terminal, so route progress through
                 # its status callback instead of writing (and erasing) directly on stdout.
                 status_callback = self._context.status_callback
-                msg = ''
                 if status_callback is not None:
                     status_callback(f'Running {self._sub} on {item}...')
-                elif sys.stdout.isatty():
-                    msg = f'Running {self._sub} on {item}...'
-                    sys.stdout.write(msg)
-                    sys.stdout.flush()
-                result = self._judge_testcase(item, timelim)
-                if msg:
-                    sys.stdout.write('\b \b' * len(msg))
+                    result = self._judge_testcase(item, timelim)
+                else:
+                    self._diag.ttymsg(f'Running {self._sub} on {item}...')
+                    result = self._judge_testcase(item, timelim)
+                    self._diag.ttymsg('')
 
                 # Apply default score here - after we've entered it into the cache, as it may also be present in other groups with different defaults
                 if result.score is None:
@@ -259,3 +256,87 @@ class SubmissionJudge:
                     result.additional_info = matching.additional_info
         result.test_node = group
         return result
+
+
+class SubmissionsJudge:
+    """Compile and judge a list of submissions against a test case group tree.
+
+    Constructs and owns one SubmissionJudge per submission passed to precompute(),
+    keeping them alive for the lifetime of this object so a submission can be
+    judge()d (and re-judge()d, e.g. at a different timelim) via judges().
+
+    Call precompute() once per group of submissions that share a timelim (e.g. once
+    for the submissions used to determine the time limit, once for the rest): each
+    call compiles and starts background testcase jobs for every submission in the
+    group before any of them are consumed, so submissions further down the list
+    don't wait for earlier ones to finish judging before their own testcases start
+    running.
+    """
+
+    def __init__(
+        self,
+        root: TestDataGroup,
+        output_validator: Program,
+        metadata: Metadata,
+        base_dir: Path,
+        context: Context,
+        graders: Graders,
+        diag: Diagnostics,
+    ) -> None:
+        self._root = root
+        self._output_validator = output_validator
+        self._metadata = metadata
+        self._base_dir = base_dir
+        self._context = context
+        self._graders = graders
+        self._diag = diag
+        self._judges: dict[Submission, SubmissionJudge] = {}
+
+    def precompute(self, submissions: list[Submission], timelim: float) -> dict[Submission, CompileResult]:
+        """Compile every submission and, for each that compiles successfully, construct a
+        SubmissionJudge and start its background testcase jobs.
+
+        Returns the compile outcome for every submission passed in; a submission with a
+        failed CompileResult has no entry in judges(). Must not be called more than once
+        for the same submission.
+        """
+        outcomes: dict[Submission, CompileResult] = {}
+        for sub in submissions:
+            result = sub.program.compile(self._base_dir)
+            outcomes[sub] = result
+            if result.success:
+                assert sub not in self._judges, f'precompute() called more than once for submission {sub}'
+                judge = SubmissionJudge(
+                    sub=sub.program,
+                    output_validator=self._output_validator,
+                    metadata=self._metadata,
+                    root=self._root,
+                    base_dir=self._base_dir,
+                    context=self._context,
+                    graders=self._graders,
+                    diag=self._diag,
+                )
+                self._judges[sub] = judge
+                if self._context.executor is not None:
+                    judge.precompute(timelim)
+        return outcomes
+
+    def judges(self) -> dict[Submission, SubmissionJudge]:
+        """The SubmissionJudge constructed for each submission that compiled successfully so
+        far, keyed by submission. Populated incrementally as precompute() is called."""
+        return self._judges
+
+
+class SubmissionsJudgeFactory(Protocol):
+    """The shape of SubmissionsJudge's constructor."""
+
+    def __call__(
+        self,
+        root: TestDataGroup,
+        output_validator: Program,
+        metadata: Metadata,
+        base_dir: Path,
+        context: Context,
+        graders: Graders,
+        diag: Diagnostics,
+    ) -> SubmissionsJudge: ...

@@ -7,6 +7,7 @@ from ..languages import Languages
 from ..run import Program, find_programs
 from . import Verdict
 from .includes import Includes
+from .paths import RelativePath, relpath, resolve
 
 
 @dataclass(frozen=True)
@@ -17,7 +18,7 @@ class Submission:
     submissions/accepted/hello.java, path is accepted/hello.java."""
 
     program: Program
-    path: Path
+    path: RelativePath
 
     def __post_init__(self) -> None:
         if len(self.path.parts) != 2:
@@ -27,6 +28,9 @@ class Submission:
     def directory(self) -> str:
         """The submission's top-level directory under submissions/."""
         return self.path.parts[0]
+
+    def __str__(self) -> str:
+        return f'{self.directory}/{self.program}'
 
 
 _VERDICT_BY_DIRECTORY: dict[str, Verdict] = {
@@ -74,7 +78,7 @@ class Submissions:
 
 
 def load_submissions(probdir: Path, language_config: Languages, includes: Includes) -> Submissions:
-    subs_root = probdir / 'submissions'
+    subs_root = resolve(probdir) / 'submissions'
     if not subs_root.is_dir():
         return Submissions()
 
@@ -82,5 +86,5 @@ def load_submissions(probdir: Path, language_config: Languages, includes: Includ
     for entry in sorted(subs_root.iterdir()):
         if entry.is_dir():
             for program in find_programs(str(entry), language_config=language_config, includes=includes):
-                submissions.append(Submission(program=program, path=Path(entry.name) / program.name))
+                submissions.append(Submission(program=program, path=relpath(Path(entry.name) / program.name)))
     return Submissions(submissions=submissions)

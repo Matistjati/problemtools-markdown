@@ -1,8 +1,20 @@
 """Shared pytest fixtures and test doubles."""
 
+from pathlib import Path
+
 import pytest
 
 from problemtools.diagnostics import Diagnostics
+
+
+def datadir() -> Path:
+    """Root directory holding static test fixture data."""
+    return (Path(__file__).parent / 'data').resolve()
+
+
+def example_directory(problem_name: str) -> Path:
+    """Path to one of the example problems shipped in the repo's top-level examples/ directory."""
+    return (Path(__file__).parent.parent / 'examples' / problem_name).resolve()
 
 
 class RecordingDiagnostics(Diagnostics):
@@ -21,6 +33,12 @@ class RecordingDiagnostics(Diagnostics):
         pass
 
     def debug(self, msg: str) -> None:
+        pass
+
+    def msg(self, msg: str) -> None:
+        pass
+
+    def ttymsg(self, msg: str) -> None:
         pass
 
     def child(self, name: str) -> Diagnostics:
