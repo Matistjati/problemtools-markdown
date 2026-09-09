@@ -1,3 +1,130 @@
+kattis-problemtools (1.20260907) resolute; urgency=medium
+
+  [ mzuenni ]
+  * use pyctd
+  * reformat
+  * fix makefile
+  * remove checktestdata
+  * add missing dependency
+  * change checktestdata invocation
+  * bump pyctd version
+  * remove outdated dependencies
+
+  [ Joshua Andersson ]
+  * Support textsuperscript in HTML
+
+  [ Gunnar Kreitz ]
+  * Check output limit when running submissions. Allow graders to output OLE and MLE statuses
+  * Disallow validators writing a score.txt on WA
+  * Improve message when fixed time limit is too tight
+  * Do not override build even if include files contain a build script
+  * Extract mainfile selection logic to Language (so it can become language-dependent)
+  * Add model and checks for include files in new modules
+  * Run new checks for include files in verifyproblem
+  * Pin dev requirements #331
+  * Also test on python 3.14
+  * Add command to easily run tests locally
+  * Pull in requirements as dynamic property in pyproject.toml instead of copy-paste
+  * Add script to ensure pre-commit and pinned ruff version stay in sync
+  * ruff 0.16.1 check --fix (what ruff considers safe fixes)
+  * Explicitly use builtins.type to avoid mypy being confused by the class having a field called type
+  * Consistently use MiB as size unit
+  * Make find_programs/get_program signatures stricter. Add type annotations.
+  * Clean up include_dir parameter from BuildRun
+  * Use model.Includes in run. Adds support default include files. #444
+  * Move some type annotations from comments to code + fixes to keep mypy happy
+  * Drop dead runtime attribute on Program
+  * In Includes - filter source files before trying to compute mainfile (to avoid main.txt being a mainfile)
+  * Add frozen to model dataclasses
+  * Fix import order
+  * Change semantics of shebang by adding shebang_files. Remove the language python2_with_shebang
+  * Delete ancient problem format update script
+  * Update ancient README information on language config
+  * Fix typing in languages so that mandatory fields are not typed as optional
+  * Add/fix type annotations in languages.py
+  * Fix rendering md statements to pdf with pandoc > 3.2.1
+  * Allow language config to use non-absolute paths to tools. Check that runtime exists. #103
+  * Add tests on command substitution and check_installed in Language
+  * Make default language config drop absolute paths
+  * Add bandit config to make bandit be less annoying when codefactor runs it
+  * Improve error message when build script fails - show stdout/stderr.
+  * Add types to run (with minor follow-up adjustments to code)
+  * Replace % with f-strings in run
+  * Move name to program (and use that for a default __str__)
+  * Replace % with f-strings
+  * Mark class constants as Final where possible
+  * Scattered small ruff fixes
+  * Use context handlers when opening files
+  * Upgrade to ruff 0.16
+  * Add type annotations to all methods outside of ProblemPlasTeX
+  * Type annotate ProblemPlasTeX (with many Any, as we get untyped callbacks from plastex) and require typing in mypy config
+  * Add bare-bones model for example submissions
+  * Add basic policy for example submissions, and move Verdict into model
+  * Create checks for submissions, *very* tightly following verifyproblem checks
+  * Replace Submission checks in verifyproblem with model + checks
+  * Drop loading loose submissions. They're not allowed, and we'll deal with them in another way.
+  * Remove bad example submission from different
+  * Create model for TestCase and TestDataGroup
+  * Tests for checkdata (copied over from verifyproblem with minimal changes)
+  * Replace TestCase and TestCaseGroup in verifyproblem and judge
+  * Move score OOB checks to submissions (as we need to run submissions to check it)
+  * Create model for InputValidators and OutputValidators
+  * Tests for validators (copied over from verifyproblem with minimal changes)
+  * Replace validators in verifyproblem with model + checks
+  * Skip wrapping testcase checking in functions for testcase checks, now that we mave models for validators
+  * Create model for Graders
+  * Checks for graders (the few we had in verifyproblem)
+  * Replace graders in verifyproblem with model + checks
+  * Create model for Statements
+  * Tests for statements (copied over from verifyproblem with minimal changes)
+  * Replace statements in verifyproblem with model + checks
+  * Replace attachments with model + checks (of which we have very few, currently)
+  * Avoid having to return a dict of unparsed data just to see if a default value was used
+  * Tests for config (copied over from verifyproblem with minimal changes)
+  * Replace config in verifyproblem with model + checks
+  * Checks for problem package (copied over from verifyproblem with minimal changes)
+  * Move problem package checks to checks module too
+  * Support loading programs without needing a tmpdir
+  * Start replacing str in run with Path
+  * Fix bug where we miscomputed size of single-file source after refactor
+  * Create model for Problem
+  * Rewrite verifyproblem to use model + checkers #398
+  * Adjust type of work_dir to Path in checks to avoid silly casts to and from str
+  * Rename format parameter to format_version to avoid shadowing the builtin
+  * Add check for typo'd and unknown folders. Move check for renamed dirs to package level #399
+  * Drop _check_submission_directory_names. This is covered by submission checks (which feels more appropriate)
+  * Add multithread support for input validation #417
+  * Tone down warnings about unknown directories in package
+  * Add lower bounds for most numeric values in metadata #482
+  * Warn when declared score ranges on test groups seem too loose
+  * Add test coverage for score range warnings
+  * Add checks for negative score range and reject_score usage
+  * Simplify _check_score_range a bit
+  * Try to be smarter about when to warn for ans files not being accepted by validator
+  * Fix corner case bug in score range computation with avg in on_reject: break group
+  * Detect silent gs failures. Surface image errors and warnings from HTML rendering in verifyproblem
+  * Narrow type of grader and output validator to SourceCode | BuildRun
+  * Add NewType to clearly document if paths are relative or absolute in our models
+  * Extract tty messages into method in Diagnostics
+  * Add msg to Diagnostics (to allow API users to catch print:s during problem verification)
+  * Add tty message while compiling statements
+  * Add tty message when running input validators
+  * Replace Checking {part} with more informative messages
+  * Use fixture Diagnostics in verify_hello, and add a few more asserts
+  * Extract directory computation in tests to pepare to move data
+  * Use hello from examples in test suite, instead of duplicating it
+  * Move data used in tests to a data directory
+  * Fix mypy errors in tests (basically just mechanically adding missing types)
+  * Add mypy coverage of tests
+  * Start adding plumbing to let API users hook into judging + minor parallelism improvements
+  * Refactor check_submissions
+  * Adjust submission messages to show directory (needed once we support more than hard coded directories)
+
+  [ Rudy Matela ]
+  * README.md: update Arch Linux instructions
+
+ -- Gunnar Kreitz <gkreitz@kattis.com>  Mon, 07 Sep 2026 11:07:04 +0200
+
 kattis-problemtools (1.20260620) noble; urgency=medium
 
   [ Gunnar Kreitz ]
